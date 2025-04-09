@@ -35,7 +35,7 @@ public class RabbitMQService : IRabbitmqService
         }
     }
 
-    public void SendMessage( string id, CancellationTokenSource cts )
+    public void SendRankMessage( string id, CancellationTokenSource cts )
     {
         var message = JsonSerializer.Serialize( id );
         Task.Factory.StartNew( () => ProduceAsync( cts.Token, message ), cts.Token );
@@ -56,9 +56,26 @@ public class RabbitMQService : IRabbitmqService
         await Task.Delay( TimeSpan.FromSeconds( 1 ), ct );
     }
 
-    /// <summary>
-    ///  Определяет топологию: producer -> exchange -> queue -> consumer.
-    ///  В нашем случае соответствие 1:1 между exchange и queue, а routing key не используется.
-    /// </summary>
-    
+    public void SendSimilarityMessage( string id, int similarity, CancellationTokenSource cts )
+    {
+        var message = new { Id = id, Similarity = similarity };
+        _logger.LogInformation( "key: {key} similarity: {rank}", id, similarity );
+        string serializedMessage = JsonSerializer.Serialize( message );
+        Task.Factory.StartNew( () => ProduceSimilarityAsync( cts.Token, serializedMessage ), cts.Token );
+    }
+
+    private async Task ProduceSimilarityAsync( CancellationToken ct, string jsonMessage )
+    {
+        byte[] messageData = Encoding.UTF8.GetBytes( jsonMessage );
+
+        await _channel.BasicPublishAsync(
+            exchange: "events_logger",
+            routingKey: "valuator.events_logger.similarity.calculate",
+            mandatory: false,
+            body: messageData,
+            cancellationToken: ct
+        );
+
+        await Task.Delay( TimeSpan.FromSeconds( 1 ), ct );
+    }
 }

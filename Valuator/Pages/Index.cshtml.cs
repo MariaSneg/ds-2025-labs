@@ -37,7 +37,8 @@ public class IndexModel : PageModel
 
         _repository.AddText( id, text );
 
-        _service.SendMessage( id, cts );
+        _service.SendRankMessage( id, cts );
+        _service.SendSimilarityMessage( id, similarity, cts );
 
         return Redirect( $"summary?id={id}" );
     }

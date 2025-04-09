@@ -2,5 +2,6 @@
 
 public interface IRabbitmqService
 {
-    void SendMessage( string id, CancellationTokenSource cts );
+    void SendRankMessage( string id, CancellationTokenSource cts );
+    void SendSimilarityMessage( string id, int similarity, CancellationTokenSource cts );
 }

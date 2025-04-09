@@ -2,6 +2,9 @@
 using RabbitMQ.Client.Events;
 using StackExchange.Redis;
 using System.Text;
+using System.Text.Json;
+using System.Threading.Channels;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace RankCalculator;
 
@@ -10,6 +13,7 @@ public class Worker : BackgroundService
     private readonly ILogger<Worker> _logger;
     private readonly IConnectionMultiplexer _redis;
     private readonly IConnection _connection;
+    private readonly IChannel _channel;
     private const string QueueName = "calculate";
 
     public Worker( ILogger<Worker> logger, IConnectionMultiplexer redis )
@@ -28,6 +32,7 @@ public class Worker : BackgroundService
         try
         {
             _connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
+            _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
             _logger.LogInformation( "����������� � RabbitMQ �����������" );
         }
         catch ( Exception ex )
@@ -55,16 +60,13 @@ public class Worker : BackgroundService
 
     private async Task RunConsumerAsync( CancellationToken stoppingToken )
     {
-
         try
         {
-            IChannel channel = await _connection.CreateChannelAsync();
+            await DeclareTopologyAsync(stoppingToken);
+            var consumer = new AsyncEventingBasicConsumer( _channel );
+            consumer.ReceivedAsync += async ( _, eventArgs ) => await ConsumeMessageAsync( eventArgs, stoppingToken );
 
-            await DeclareTopologyAsync( channel , stoppingToken);
-            var consumer = new AsyncEventingBasicConsumer( channel );
-            consumer.ReceivedAsync += async ( _, eventArgs ) => await ConsumeMessageAsync( eventArgs, channel );
-
-            await channel.BasicConsumeAsync(
+            await _channel.BasicConsumeAsync(
                 queue: QueueName,
                 autoAck: false,
                 consumer: consumer
@@ -80,7 +82,7 @@ public class Worker : BackgroundService
         await Task.Delay( 1000, stoppingToken );
     }
 
-    private async Task ConsumeMessageAsync( BasicDeliverEventArgs eventArgs, IChannel channel )
+    private async Task ConsumeMessageAsync( BasicDeliverEventArgs eventArgs, CancellationToken stoppingToken )
     {
         _logger.LogInformation( "Consuming message..." );
 
@@ -97,7 +99,9 @@ public class Worker : BackgroundService
 
         await db.StringSetAsync( rankKey, rank );
 
-        await channel.BasicAckAsync( eventArgs.DeliveryTag, false );
+        await _channel.BasicAckAsync( eventArgs.DeliveryTag, false );
+
+        SendMessage(key, rank, stoppingToken);
 
         _logger.LogInformation( "key: {key} text: {text}", key, text );
 
@@ -115,24 +119,47 @@ public class Worker : BackgroundService
         return ( double )nonAlphabeticCount / totalChars;
     }
 
-    private async Task DeclareTopologyAsync( IChannel channel, CancellationToken ct )
+    private async Task DeclareTopologyAsync( CancellationToken ct )
     {
-        await channel.ExchangeDeclareAsync(
+        await _channel.ExchangeDeclareAsync(
             exchange: "valuator",
             type: ExchangeType.Direct,
             cancellationToken: ct
         );
-        await channel.QueueDeclareAsync(
+        await _channel.QueueDeclareAsync(
             queue: "calculate",
             durable: true,
             exclusive: false,
             autoDelete: false,
             cancellationToken: ct
         );
-        await channel.QueueBindAsync(
+        await _channel.QueueBindAsync(
             queue: "calculate",
             exchange: "valuator",
             routingKey: "rank",
             cancellationToken: ct );
+    }
+
+    public void SendMessage( string id, double rank, CancellationToken stoppingToken )
+    {
+        _logger.LogInformation( "key: {key} rank: {rank}", id, rank );
+        var message = new { Id = id, Rank = rank };
+        string serializedMessage = JsonSerializer.Serialize( message );
+        Task.Factory.StartNew( () => ProduceAsync( stoppingToken, serializedMessage ), stoppingToken );
+    }
+
+    private async Task ProduceAsync( CancellationToken ct, string jsonMessage )
+    {
+        byte[] messageData = Encoding.UTF8.GetBytes( jsonMessage );
+
+        await _channel.BasicPublishAsync(
+            exchange: "events_logger",
+            routingKey: "valuator.events_logger.rank.calculate",
+            mandatory: false,
+            body: messageData,
+            cancellationToken: ct
+        );
+
+        await Task.Delay( TimeSpan.FromSeconds( 1 ), ct );
     }
 }
