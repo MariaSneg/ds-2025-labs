@@ -28,11 +28,11 @@ public class Worker : BackgroundService
         try
         {
             _connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
-            _logger.LogInformation( "����������� � RabbitMQ �����������" );
+            _logger.LogInformation( "Подключение к RabbitMQ успешно ");
         }
         catch ( Exception ex )
         {
-            _logger.LogError( ex, "������ ����������� � RabbitMQ" );
+            _logger.LogError( ex, "Ошибка подключения к RabbitMQ" );
             throw;
         }
     }
@@ -76,7 +76,6 @@ public class Worker : BackgroundService
         };
         _logger.LogInformation( "Consumer started and waiting for messages..." );
 
-        // Keep the consumer running until cancellation is requested
         await Task.Delay( 1000, stoppingToken );
     }
 
@@ -112,7 +111,8 @@ public class Worker : BackgroundService
         int totalChars = text.Length;
         int nonAlphabeticCount = text.Count( c => !char.IsLetter( c ) );
 
-        return ( double )nonAlphabeticCount / totalChars;
+        double ratio = ( double )nonAlphabeticCount / totalChars;
+        return Math.Round( ratio, 3 );
     }
 
     private async Task DeclareTopologyAsync( IChannel channel, CancellationToken ct )
