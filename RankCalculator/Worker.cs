@@ -33,11 +33,11 @@ public class Worker : BackgroundService
         {
             _connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
             _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
-            _logger.LogInformation( "����������� � RabbitMQ �����������" );
+            _logger.LogInformation( "Connection to RabbitMQ successful" );
         }
         catch ( Exception ex )
         {
-            _logger.LogError( ex, "������ ����������� � RabbitMQ" );
+            _logger.LogError( ex, "Error conecting to RabbitMQ" );
             throw;
         }
     }
