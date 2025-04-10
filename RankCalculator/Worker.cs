@@ -28,11 +28,11 @@ public class Worker : BackgroundService
         try
         {
             _connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
-            _logger.LogInformation( "Подключение к RabbitMQ успешно ");
+            _logger.LogInformation( "Connection to RabbitMQ successful");
         }
         catch ( Exception ex )
         {
-            _logger.LogError( ex, "Ошибка подключения к RabbitMQ" );
+            _logger.LogError( ex, "Error conecting to RabbitMQ" );
             throw;
         }
     }
@@ -123,14 +123,14 @@ public class Worker : BackgroundService
             cancellationToken: ct
         );
         await channel.QueueDeclareAsync(
-            queue: "calculate",
+            queue: QueueName,
             durable: true,
             exclusive: false,
             autoDelete: false,
             cancellationToken: ct
         );
         await channel.QueueBindAsync(
-            queue: "calculate",
+            queue: QueueName,
             exchange: "valuator",
             routingKey: "rank",
             cancellationToken: ct );
