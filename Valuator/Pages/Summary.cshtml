@@ -2,5 +2,23 @@
 @model Valuator.Pages.SummaryModel
 @{
 }
-<p>Оценка содержания: @Model.Rank</p>
+<p id="rank">Оценка содержания: вычисляется</p>
 <p>Плагиат: @Model.Similarity</p>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
+<script>
+    const hubConnection = new signalR.HubConnectionBuilder()
+        .withUrl("http://localhost:80/rank", {
+            skipNegotiation: false }) // Используем относительный URL
+        .configureLogging(signalR.LogLevel.Information)
+        .build();
+
+    hubConnection.on("Received", function (rank, id) {
+        if (id === "@(Model.Key)") {
+            document.getElementById("rank").textContent = "Оценка содержания: " + rank;
+        }
+    });
+
+    hubConnection.start()
+        .then(() => console.log("SignalR соединение установлено"))
+        .catch(err => console.error("Ошибка SignalR: ", err));
+</script>

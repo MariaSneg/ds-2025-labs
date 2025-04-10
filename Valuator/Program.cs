@@ -14,6 +14,8 @@ public class Program
         // Add services to the container.
         builder.Services.AddRazorPages();
 
+        builder.Services.AddSignalR();
+
         builder.Services.AddSingleton<IConnectionMultiplexer>( options =>
             ConnectionMultiplexer.Connect( ( "redis:6379" ) ) );
 

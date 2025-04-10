@@ -1,4 +1,5 @@
-﻿using RabbitMQ.Client;
+﻿using Microsoft.AspNetCore.SignalR;
+using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using StackExchange.Redis;
 using System.Text;
@@ -14,12 +15,14 @@ public class Worker : BackgroundService
     private readonly IConnectionMultiplexer _redis;
     private readonly IConnection _connection;
     private readonly IChannel _channel;
+    private readonly IHubContext<RankHub> _hubContext;
     private const string QueueName = "calculate";
 
-    public Worker( ILogger<Worker> logger, IConnectionMultiplexer redis )
+    public Worker( ILogger<Worker> logger, IConnectionMultiplexer redis, IHubContext<RankHub> hubContext )
     {
         _logger = logger;
         _redis = redis;
+        _hubContext = hubContext;
 
         var factory = new ConnectionFactory
         {
@@ -98,6 +101,12 @@ public class Worker : BackgroundService
         string rankKey = "RANK-" + key;
 
         await db.StringSetAsync( rankKey, rank );
+
+        TimeSpan interval = TimeSpan.FromSeconds( new Random().Next( 3, 15 ) );
+        Console.WriteLine( $"Waiting {interval}" );
+        await Task.Delay( interval );
+
+        await _hubContext.Clients.All.SendAsync( "Received", rank, key );
 
         await _channel.BasicAckAsync( eventArgs.DeliveryTag, false );
 

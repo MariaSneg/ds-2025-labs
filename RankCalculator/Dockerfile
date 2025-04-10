@@ -1,9 +1,9 @@
-#See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
-FROM mcr.microsoft.com/dotnet/runtime:8.0 AS base
+# Базовый образ для запуска (ASP.NET Core, а не просто Runtime)
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER app
 WORKDIR /app
 
+# Этап сборки (используем SDK)
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
@@ -13,10 +13,14 @@ COPY . .
 WORKDIR "/src/."
 RUN dotnet build "./RankCalculator.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
+# Этап публикации
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "./RankCalculator.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
+ENV ASPNETCORE_URLS=http://0.0.0.0:5003;http://0.0.0.0:5004
+
+# Финальный образ (используем ASP.NET Core)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
