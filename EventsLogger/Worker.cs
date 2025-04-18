@@ -117,21 +117,21 @@ public class Worker : BackgroundService
     private async Task DeclareTopologyAsync( IChannel channel, CancellationToken ct )
     {
         await channel.ExchangeDeclareAsync(
-            exchange: "events_logger",
+            exchange: "events",
             type: ExchangeType.Topic,
             cancellationToken: ct
         );
         await channel.QueueDeclareAsync(
-            queue: "events",
+            queue: "events_logger",
             durable: true,
             exclusive: false,
             autoDelete: false,
             cancellationToken: ct
         );
         await channel.QueueBindAsync(
-            queue: "events",
-            exchange: "events_logger",
-            routingKey: "valuator.events_logger.#",
+            queue: "events_logger",
+            exchange: "events",
+            routingKey: "valuator.events.#",
             cancellationToken: ct );
     }
 }

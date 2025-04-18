@@ -69,8 +69,8 @@ public class RabbitMQService : IRabbitmqService
         byte[] messageData = Encoding.UTF8.GetBytes( jsonMessage );
 
         await _channel.BasicPublishAsync(
-            exchange: "events_logger",
-            routingKey: "valuator.events_logger.similarity.calculate",
+            exchange: "events",
+            routingKey: "valuator.events.similarity.calculate",
             mandatory: false,
             body: messageData,
             cancellationToken: ct
