@@ -11,8 +11,12 @@ services:
       - ConnectionStrings:Redis=redis
       - ASPNETCORE_URLS=http://0.0.0.0:5001
       - EXTERNAL_PORT=5001
+      - DB_MAIN=redis_main:6379 
+      - DB_RU=redis_ru:6379 
+      - DB_EU=redis_eu:6379 
+      - DB_ASIA=redis_asia:6379
     depends_on:
-      - redis
+      - redis_main
       - rabbitmq
     networks:
       - app-network
@@ -28,6 +32,10 @@ services:
       - ConnectionStrings:Redis=redis
       - ASPNETCORE_URLS=http://0.0.0.0:5002
       - EXTERNAL_PORT=5002
+      - DB_MAIN=redis_main:6379 
+      - DB_RU=redis_ru:6379 
+      - DB_EU=redis_eu:6379 
+      - DB_ASIA=redis_asia:6379
     depends_on:
       - app1
     networks:
@@ -43,10 +51,14 @@ services:
       - DOTNET_ENVIRONMENT=Production
       - ConnectionStrings__Redis=redis:6379
       - ConnectionStrings__RabbitMQ=amqp://admin:123@rabbitmq:5672
+      - DB_MAIN=redis_main:6379 
+      - DB_RU=redis_ru:6379 
+      - DB_EU=redis_eu:6379 
+      - DB_ASIA=redis_asia:6379
     depends_on:
-      rabbitmq:
+      redis_main:
         condition: service_healthy
-      redis:
+      rabbitmq:
         condition: service_healthy
       app1:
         condition: service_started
@@ -61,6 +73,10 @@ services:
       - DOTNET_ENVIRONMENT=Production
       - ConnectionStrings__Redis=redis:6379
       - ConnectionStrings__RabbitMQ=amqp://admin:123@rabbitmq:5672
+      - DB_MAIN=redis_main:6379 
+      - DB_RU=redis_ru:6379 
+      - DB_EU=redis_eu:6379 
+      - DB_ASIA=redis_asia:6379
     depends_on:
       rank_calculator1:
         condition: service_started
@@ -94,11 +110,11 @@ services:
       - app-network
 
   # Redis
-  redis:
+  redis_main:
     image: redis:latest
-    container_name: redis
+    container_name: redis_main
     ports:
-      - "6379:6379"
+      - "6000:6379"
     networks:
       - app-network
     healthcheck:
@@ -107,6 +123,54 @@ services:
       timeout: 5s
       retries: 5
 
+  redis_ru:
+    image: redis:latest
+    container_name: redis_ru
+    ports:
+      - "6001:6379"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      redis_main:
+        condition: service_started
+
+  redis_eu:
+    image: redis:latest
+    container_name: redis_eu
+    ports:
+      - "6002:6379"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      redis_main:
+        condition: service_started
+
+  redis_asia:
+    image: redis:latest
+    container_name: redis_asia
+    ports:
+      - "6003:6379"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      redis_main:
+        condition: service_started
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -114,6 +178,7 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=admin
       - RABBITMQ_DEFAULT_PASS=123
+      - RABBITMQ_ERLANG_COOKIE=supersecretlongcookie1234567890
     ports:
       - "5672:5672"  # AMQP
       - "15672:15672"  # Web UI

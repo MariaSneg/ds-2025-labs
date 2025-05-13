@@ -1,6 +1,6 @@
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Valuator.Repositories;
 using Valuator.Services;
 
 namespace Valuator.Pages;
@@ -8,15 +8,23 @@ namespace Valuator.Pages;
 public class IndexModel : PageModel
 {
     private readonly ILogger<IndexModel> _logger;
-    private readonly IValuatorRepository _repository;
+    private readonly IShardManager _shardManager;
     private readonly IRabbitmqService _service;
+    private readonly Dictionary<string, string> _countryRegions = new()
+    {
+        [ "Russia" ] = "RU",
+        [ "France" ] = "EU",
+        [ "Germany" ] = "EU",
+        [ "UAE" ] = "ASIA",
+        [ "India" ] = "ASIA"
+    };
 
     public string Port { get; private set; }
 
-    public IndexModel( ILogger<IndexModel> logger, IValuatorRepository repository, IRabbitmqService rabbitmqService )
+    public IndexModel( ILogger<IndexModel> logger, IShardManager shardManager, IRabbitmqService rabbitmqService )
     {
         _logger = logger;
-        _repository = repository;
+        _shardManager = shardManager;
         _service = rabbitmqService;
     }
 
@@ -25,34 +33,28 @@ public class IndexModel : PageModel
         Port = Environment.GetEnvironmentVariable( "EXTERNAL_PORT" ) ?? "NO PORT";
     }
 
-    public IActionResult OnPost(string text, CancellationTokenSource cts )
+    public IActionResult OnPost(string text, string country, CancellationTokenSource cts )
     {
         _logger.LogDebug( text );
 
-
+        if(string.IsNullOrEmpty( text ) )
+        {
+            return Page();
+        }
+        
         string id = Guid.NewGuid().ToString();
+        _shardManager.SetToMain( id, _countryRegions[ country ] );
 
-        int similarity = _repository.CheckSimilarity( text );
-        _repository.AddSimilarity( id, similarity );
+		_shardManager.SetRegionShard( id );
 
-        _repository.AddText( id, text );
+		int similarity = _shardManager.CheckSimilarity( text );
+        _shardManager.SetSimilarity( id, similarity );
+
+        _shardManager.SetText( id, text );
 
         _service.SendRankMessage( id, cts );
         _service.SendSimilarityMessage( id, similarity, cts );
 
         return Redirect( $"summary?id={id}" );
-    }
-
-    private double CalculateRank(string text)
-    {
-        if(string.IsNullOrEmpty(text)) 
-            return 0;
-        int totalCount = text.Length;
-
-        int nonLetterCount = text.Count( c => !char.IsLetter(c));
-
-        double rank = (nonLetterCount * 1.0) / totalCount;
-
-        return Math.Round( rank, 3 );
     }
 }

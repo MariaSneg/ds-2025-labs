@@ -3,23 +3,21 @@ using RabbitMQ.Client.Events;
 using StackExchange.Redis;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Channels;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace RankCalculator;
 
 public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
-    private readonly IConnectionMultiplexer _redis;
     private readonly IConnection _connection;
     private readonly IChannel _channel;
     private const string QueueName = "calculate";
+    private readonly IShardManager _shardManager;
 
-    public Worker( ILogger<Worker> logger, IConnectionMultiplexer redis )
+    public Worker( ILogger<Worker> logger,  IShardManager shardManager )
     {
         _logger = logger;
-        _redis = redis;
+        _shardManager = shardManager;
 
         var factory = new ConnectionFactory
         {
@@ -87,17 +85,14 @@ public class Worker : BackgroundService
         _logger.LogInformation( "Consuming message..." );
 
         string key = Encoding.UTF8.GetString( eventArgs.Body.ToArray() ).Trim( '\"' );
-        var db = _redis.GetDatabase();
 
-        string textKey = "TEXT-" + key;
+        _shardManager.SetRegionShard( key );
 
-        string text = Convert.ToString( db.StringGet( textKey ) );
+        string text = _shardManager.Get(key, "TEXT-").ToString();
 
         var rank = CalculateRank( text! );
 
-        string rankKey = "RANK-" + key;
-
-        await db.StringSetAsync( rankKey, rank );
+        _shardManager.SetRank(key, rank);
 
         await _channel.BasicAckAsync( eventArgs.DeliveryTag, false );
 

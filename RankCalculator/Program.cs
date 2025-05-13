@@ -10,8 +10,10 @@ public class Program
 
         builder.Services.AddHostedService<Worker>();
 
-        builder.Services.AddSingleton<IConnectionMultiplexer>( options =>
-            ConnectionMultiplexer.Connect( ( "redis:6379" ) ) );
+        //builder.Services.AddSingleton<IConnectionMultiplexer>( options =>
+        //    ConnectionMultiplexer.Connect( ( "redis:6379" ) ) );
+
+        builder.Services.AddScoped<IShardManager, ShardManager>();
 
         var host = builder.Build();
         host.Run();

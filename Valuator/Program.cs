@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis;
-using Valuator.Repositories;
 using Valuator.Services;
 
 namespace Valuator;
@@ -15,15 +15,17 @@ public class Program
         builder.Services.AddRazorPages();
 
         builder.Services.AddSingleton<IConnectionMultiplexer>( options =>
-            ConnectionMultiplexer.Connect( ( "redis:6379" ) ) );
+            ConnectionMultiplexer.Connect( ( "redis_main:6379" ) ) );
 
-        var redis = ConnectionMultiplexer.Connect( "redis:6379" );
+        var redis = ConnectionMultiplexer.Connect( "redis_main:6379" );
 
         builder.Services.AddDataProtection()
             .PersistKeysToStackExchangeRedis( redis, "DataProtection-Keys" )
             .SetApplicationName( "Valuator" );
 
-        builder.Services.AddScoped<IValuatorRepository, ValuatorRepository>();
+        builder.Services.AddMvc( options => options.Filters.Add( new AutoValidateAntiforgeryTokenAttribute() ) );
+
+        builder.Services.AddScoped<IShardManager, ShardManager>();
         builder.Services.AddSingleton<IRabbitmqService, RabbitMQService>();
 
         var app = builder.Build();

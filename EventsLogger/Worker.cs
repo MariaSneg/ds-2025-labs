@@ -75,7 +75,7 @@ public class Worker : BackgroundService
             consumer.ReceivedAsync += async ( _, eventArgs ) => await ConsumeMessageAsync( eventArgs, channel );
 
             await channel.BasicConsumeAsync(
-                queue: "events",
+                queue: "events_logger",
                 autoAck: false,
                 consumer: consumer
             );

@@ -6,7 +6,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Valuator", "Valuator\Valuat
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RankCalculator", "RankCalculator\RankCalculator.csproj", "{17EC2BE0-D48C-4D3E-ABE6-627474ACA8AD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventsLogger", "EventsLogger\EventsLogger.csproj", "{6D67C132-BD1D-49A8-A788-A90B4ED1345E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventsLogger", "EventsLogger\EventsLogger.csproj", "{6D67C132-BD1D-49A8-A788-A90B4ED1345E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShardManager", "ShardManager\ShardManager.csproj", "{2A040504-C1CA-48EF-8D6F-E6239C5122E1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +28,10 @@ Global
 		{6D67C132-BD1D-49A8-A788-A90B4ED1345E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6D67C132-BD1D-49A8-A788-A90B4ED1345E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6D67C132-BD1D-49A8-A788-A90B4ED1345E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A040504-C1CA-48EF-8D6F-E6239C5122E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A040504-C1CA-48EF-8D6F-E6239C5122E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A040504-C1CA-48EF-8D6F-E6239C5122E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A040504-C1CA-48EF-8D6F-E6239C5122E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

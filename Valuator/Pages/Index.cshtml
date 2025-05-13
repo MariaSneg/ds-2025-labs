@@ -1,12 +1,30 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Главная";
+    ViewData[ "Title" ] = "Главная";
 }
 
 <div class="text-center">
     <form method="post">
         <p>Порт: @Model.Port</p>
+
+        <div class="col-2">Страна:</div>
+        <div class="col-10">
+            <select name="country">
+                <optgroup label="RU">
+                    <option value="Russia">Russia</option>
+                </optgroup>
+                <optgroup label="EU">
+                    <option value="France">France</option>
+                    <option value="Germany">Germany</option>
+                </optgroup>
+                <optgroup label="ASIA">
+                    <option value="UAE">UAE</option>
+                    <option value="India">India</option>
+                </optgroup>
+            </select>
+        </div>
+
         <div class="col-2">Текст для оценки:</div>
         <div class="col-10">
             <textarea name="text" rows="5" cols="50"></textarea>
