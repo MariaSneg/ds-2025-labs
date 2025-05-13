@@ -2,10 +2,6 @@
 
 namespace Valuator;
 
-//пустой текст
-//двойное подключение убрать
-//не сохранять дублированнный текст
-
 public class ShardManager : IShardManager
 {
     private Dictionary<string, string> _shardConectionStringDictionary;
