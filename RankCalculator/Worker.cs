@@ -12,12 +12,14 @@ public class Worker : BackgroundService
     private readonly IConnection _connection;
     private readonly IChannel _channel;
     private const string QueueName = "calculate";
-    private readonly IShardManager _shardManager;
+    //private readonly IShardManager _shardManager;
+    private readonly IServiceProvider _serviceProvider;
 
-    public Worker( ILogger<Worker> logger,  IShardManager shardManager )
+
+	public Worker( ILogger<Worker> logger, IServiceProvider serviceProvider )
     {
         _logger = logger;
-        _shardManager = shardManager;
+		_serviceProvider = serviceProvider;
 
         var factory = new ConnectionFactory
         {
@@ -86,13 +88,16 @@ public class Worker : BackgroundService
 
         string key = Encoding.UTF8.GetString( eventArgs.Body.ToArray() ).Trim( '\"' );
 
-        _shardManager.SetRegionShard( key );
+		using var scope = _serviceProvider.CreateScope();
+		var shardManager = scope.ServiceProvider.GetRequiredService<IShardManager>();
 
-        string text = _shardManager.Get(key, "TEXT-").ToString();
+		shardManager.SetRegionShard( key );
+
+        string text = shardManager.Get(key, "TEXT-").ToString();
 
         var rank = CalculateRank( text! );
 
-        _shardManager.SetRank(key, rank);
+        shardManager.SetRank(key, rank);
 
         await _channel.BasicAckAsync( eventArgs.DeliveryTag, false );
 

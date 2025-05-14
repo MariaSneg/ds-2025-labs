@@ -8,7 +8,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RankCalculator", "RankCalcu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventsLogger", "EventsLogger\EventsLogger.csproj", "{6D67C132-BD1D-49A8-A788-A90B4ED1345E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShardManager", "ShardManager\ShardManager.csproj", "{2A040504-C1CA-48EF-8D6F-E6239C5122E1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShardManager", "ShardManager\ShardManager.csproj", "{2A040504-C1CA-48EF-8D6F-E6239C5122E1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

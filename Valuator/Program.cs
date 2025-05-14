@@ -14,10 +14,12 @@ public class Program
         // Add services to the container.
         builder.Services.AddRazorPages();
 
-        builder.Services.AddSingleton<IConnectionMultiplexer>( options =>
-            ConnectionMultiplexer.Connect( ( "redis_main:6379" ) ) );
+		var connectionString = builder.Configuration.GetValue<string>( "RedisConnections:MAIN" );
 
-        var redis = ConnectionMultiplexer.Connect( "redis_main:6379" );
+		builder.Services.AddSingleton<IConnectionMultiplexer>( options =>
+            ConnectionMultiplexer.Connect(  connectionString  ) );
+
+        var redis = ConnectionMultiplexer.Connect( connectionString );
 
         builder.Services.AddDataProtection()
             .PersistKeysToStackExchangeRedis( redis, "DataProtection-Keys" )

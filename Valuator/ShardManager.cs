@@ -1,25 +1,23 @@
-﻿using StackExchange.Redis;
+﻿using RabbitMQ.Client;
+using StackExchange.Redis;
 
 namespace Valuator;
 
 public class ShardManager : IShardManager
 {
-    private Dictionary<string, string> _shardConectionStringDictionary;
+    private Dictionary<string, string> _shardConectionStringDictionary = new Dictionary<string, string>();
     private ILogger<ShardManager> _logger;
     private IDatabase _database;
 
 
-	public ShardManager( ILogger<ShardManager> logger )
+	public ShardManager( ILogger<ShardManager> logger, IConfiguration configuration )
     {
         _logger = logger;
-        _shardConectionStringDictionary = new()
-		{
-			{ "MAIN", GetEnvironmentVariable("DB_MAIN") },
-			{ "RU", GetEnvironmentVariable("DB_RU") },
-			{ "EU", GetEnvironmentVariable("DB_EU") },
-			{ "ASIA", GetEnvironmentVariable("DB_ASIA") },
-		};
-    }
+		_shardConectionStringDictionary.Add( "MAIN", configuration[ "RedisConnections:MAIN" ] ?? "redis_main:6379" );
+		_shardConectionStringDictionary.Add( "RU", configuration[ "RedisConnections:RU" ] ?? "redis_ru:6379" );
+		_shardConectionStringDictionary.Add( "EU", configuration[ "RedisConnections:EU" ] ?? "redis_eu:6379" );
+		_shardConectionStringDictionary.Add( "ASIA", configuration[ "RedisConnections:ASIA" ] ?? "redis_asia:6379" );
+	}
 
 	private string GetEnvironmentVariable( string name )
 	{
@@ -33,7 +31,8 @@ public class ShardManager : IShardManager
 
 	public void SetRegionShard( string key )
     {
-        var mainShard = ConnectionMultiplexer.Connect( _shardConectionStringDictionary[ "MAIN" ] ).GetDatabase();
+		_logger.LogInformation( _shardConectionStringDictionary[ "MAIN" ] );
+		var mainShard = ConnectionMultiplexer.Connect( _shardConectionStringDictionary[ "MAIN" ] ).GetDatabase();
         var region = mainShard.StringGet( key ).ToString();
 
         _logger.LogInformation( $"LOOKUP {key}, {region}" );
@@ -58,7 +57,8 @@ public class ShardManager : IShardManager
 
     public void SetToMain( string key, string value )
     {
-        var mainShard = ConnectionMultiplexer.Connect( _shardConectionStringDictionary[ "MAIN" ] ).GetDatabase();
+		_logger.LogInformation( _shardConectionStringDictionary[ "MAIN" ] );
+		var mainShard = ConnectionMultiplexer.Connect( _shardConectionStringDictionary[ "MAIN" ] ).GetDatabase();
         mainShard.StringSet( key, value );
     }
 
@@ -73,10 +73,13 @@ public class ShardManager : IShardManager
         {
             if ( region == "MAIN" )
                 continue;
+            var connectionString = _shardConectionStringDictionary[ region ];
 
-            var shard = ConnectionMultiplexer.Connect( _shardConectionStringDictionary[ region ] ).GetDatabase();
+			var shard = ConnectionMultiplexer.Connect( connectionString ).GetDatabase();
+			var parts = connectionString.Split( ',' );
+			var hostAndPort = parts[ 0 ];
 
-            var server = ConnectionMultiplexer.Connect( _shardConectionStringDictionary[ region ] ).GetServer( _shardConectionStringDictionary[ region ] );
+			var server = ConnectionMultiplexer.Connect( connectionString ).GetServer( hostAndPort );
             var keys = server.Keys( pattern: "TEXT-*" );
 
             foreach ( var key in keys )

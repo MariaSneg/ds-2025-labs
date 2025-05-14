@@ -4,22 +4,19 @@ namespace RankCalculator;
 
 public class ShardManager : IShardManager
 {
-    private Dictionary<string, string> _shardConectionStringDictionary;
+    private Dictionary<string, string> _shardConectionStringDictionary = new Dictionary<string, string>();
     private ILogger<ShardManager> _logger;
     private IDatabase _database;
 
 
-	public ShardManager( ILogger<ShardManager> logger )
+	public ShardManager( ILogger<ShardManager> logger, IConfiguration configuration )
     {
         _logger = logger;
-        _shardConectionStringDictionary = new()
-        {
-			{ "MAIN", GetEnvironmentVariable("DB_MAIN") },
-			{ "RU", GetEnvironmentVariable("DB_RU") },
-			{ "EU", GetEnvironmentVariable("DB_EU") },
-			{ "ASIA", GetEnvironmentVariable("DB_ASIA") },
-		};
-    }
+		_shardConectionStringDictionary.Add( "MAIN", configuration[ "RedisConnections:MAIN" ] ?? "redis_main:6379" );
+		_shardConectionStringDictionary.Add( "RU", configuration[ "RedisConnections:RU" ] ?? "redis_ru:6379" );
+		_shardConectionStringDictionary.Add( "EU", configuration[ "RedisConnections:EU" ] ?? "redis_eu:6379" );
+		_shardConectionStringDictionary.Add( "ASIA", configuration[ "RedisConnections:ASIA" ] ?? "redis_asia:6379" );
+	}
 
 	private string GetEnvironmentVariable( string name )
 	{
