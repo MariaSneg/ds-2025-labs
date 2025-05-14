@@ -14,12 +14,14 @@ public class Worker : BackgroundService
     private readonly IConnectionMultiplexer _redis;
     private readonly IConnection _connection;
     private readonly IChannel _channel;
+    private readonly IRankCalculator _rankCalculator;
     private const string QueueName = "calculate";
 
-    public Worker( ILogger<Worker> logger, IConnectionMultiplexer redis )
+    public Worker( ILogger<Worker> logger, IConnectionMultiplexer redis, IRankCalculator rankCalculator )
     {
         _logger = logger;
         _redis = redis;
+        _rankCalculator = rankCalculator;
 
         var factory = new ConnectionFactory
         {
@@ -93,7 +95,7 @@ public class Worker : BackgroundService
 
         string text = Convert.ToString( db.StringGet( textKey ) );
 
-        var rank = CalculateRank( text! );
+        var rank = _rankCalculator.CalculateRank( text! );
 
         string rankKey = "RANK-" + key;
 
@@ -106,17 +108,6 @@ public class Worker : BackgroundService
         _logger.LogInformation( "key: {key} text: {text}", key, text );
 
         _logger.LogInformation( "Message processed. Rank: {rank}", rank );
-    }
-
-    private static double CalculateRank( string text )
-    {
-        if ( string.IsNullOrEmpty( text ) )
-            return 0;
-
-        int totalChars = text.Length;
-        int nonAlphabeticCount = text.Count( c => !char.IsLetter( c ) );
-
-        return ( double )nonAlphabeticCount / totalChars;
     }
 
     private async Task DeclareTopologyAsync( CancellationToken ct )

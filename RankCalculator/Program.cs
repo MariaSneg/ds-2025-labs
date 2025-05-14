@@ -10,6 +10,8 @@ public class Program
 
         builder.Services.AddHostedService<Worker>();
 
+        builder.Services.AddSingleton<IRankCalculator, RankCalculatorService>();
+
         builder.Services.AddSingleton<IConnectionMultiplexer>( options =>
             ConnectionMultiplexer.Connect( ( "redis:6379" ) ) );
 

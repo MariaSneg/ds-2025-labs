@@ -29,6 +29,10 @@ public class IndexModel : PageModel
     {
         _logger.LogDebug( text );
 
+        if (String.IsNullOrEmpty(text))
+        {
+            return Page();
+        }
 
         string id = Guid.NewGuid().ToString();
 
