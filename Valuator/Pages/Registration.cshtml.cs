@@ -1,32 +1,48 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Valuator.DTOs;
+using Valuator.Utils;
 
 namespace Valuator.Pages;
 
 public class RegistrationModel : PageModel
 {
     [BindProperty]
-    public InputModel Input { get; set; }
+    public CreateUserDto Input { get; set; }
+    private IShardManager _shardManager;
+    private IPasswordHasher _passwordHasher;
 
-    public class InputModel
+    public RegistrationModel( IShardManager shardManager, IPasswordHasher passwordHasher )
     {
-        [Required( ErrorMessage = "Login is required" )]
-        [Display( Name = "Login" )]
-        public string Username { get; set; }
-
-        [Required( ErrorMessage = "Password is required" )]
-        [DataType( DataType.Password )]
-        [Display( Name = "Password" )]
-        public string Password { get; set; }
-
-        [DataType( DataType.Password )]
-        [Display( Name = "Confirm your password" )]
-        [Compare( "Password", ErrorMessage = "Пароли не совпадают" )]
-        public string ConfirmPassword { get; set; }
+        _shardManager = shardManager;
+        _passwordHasher = passwordHasher;
     }
 
     public void OnGet()
     {
     }
+
+    public async Task<IActionResult> OnPost()
+    {
+        if ( !ModelState.IsValid )
+        {
+            return Page();
+        }
+        var userExists = await _shardManager.UserExists( Input.Username );
+        if ( userExists )
+        {
+            ModelState.AddModelError( string.Empty, "Username or email already exists." );
+            return Page();
+        }
+
+        await _shardManager.AddUser( new Models.User
+        {
+            Username = Input.Username,
+            Password = _passwordHasher.Hash( Input.Password )
+        } );
+
+        return Redirect( "/authorization" );
+    }
+
 }

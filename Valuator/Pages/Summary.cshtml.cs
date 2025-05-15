@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using StackExchange.Redis;
 
 namespace Valuator.Pages;
@@ -17,19 +19,45 @@ public class SummaryModel : PageModel
     public double Similarity { get; set; }
     public bool Loading { get; set; } = false;
 
-    public void OnGet(string id)
-	{
+    public IActionResult OnGet( string id )
+    {
         _logger.LogDebug( id );
-		_shardManager.SetRegionShard( id );
-		var rank = _shardManager.Get( id, "RANK-" );
-        var similarity = ( int )_shardManager.Get( id, "SIMILARITY-" );
-        Similarity = similarity;
-        if ( rank != RedisValue.Null )
+        _shardManager.SetRegionShard( id );
+
+        var userClaim = User.FindFirst( ClaimTypes.Name );
+        if ( userClaim == null )
         {
-            Rank = Convert.ToDouble( rank );
-            Console.WriteLine( Rank );
-            return;
+            return Redirect( "/Authorization" );
         }
+
+        string username = userClaim.Value;
+
+        string author = _shardManager.GetAuthor( id ).ToString();
+
+        if ( username != author )
+        {
+            return Redirect( "/Authorization" );
+        }
+
+        var rankValue = _shardManager.Get( id, "RANK-" );
+        var similarityValue = _shardManager.Get( id, "SIMILARITY-" );
+
+        if ( similarityValue == RedisValue.Null )
+        {
+            Similarity = 0;
+        }
+        else
+        {
+            Similarity = ( int )similarityValue;
+        }
+
+        if ( rankValue != RedisValue.Null )
+        {
+            Rank = Convert.ToDouble( rankValue );
+            return Page();
+        }
+
         Loading = true;
+        return Page();
     }
 }

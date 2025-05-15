@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -32,7 +33,7 @@ public class IndexModel : PageModel
     {
         Port = Environment.GetEnvironmentVariable( "EXTERNAL_PORT" ) ?? "NO PORT";
     }
-
+    //ошибка при отправке
     public IActionResult OnPost(string text, string country, CancellationTokenSource cts )
     {
         _logger.LogDebug( text );
@@ -51,6 +52,17 @@ public class IndexModel : PageModel
         _shardManager.SetSimilarity( id, similarity );
 
         _shardManager.SetText( id, text );
+
+        var userClaim = User.FindFirst( ClaimTypes.Name );
+        if ( userClaim == null )
+        {
+            return RedirectToPage( "/Authorization" );
+        }
+
+        string username = userClaim.Value;
+
+        _shardManager.SetAuthor( id, username );
+
 
         _service.SendRankMessage( id, cts );
         _service.SendSimilarityMessage( id, similarity, cts );

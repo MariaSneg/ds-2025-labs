@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis;
 using Valuator.Services;
+using Valuator.Utils;
 
 namespace Valuator;
 
@@ -29,6 +31,12 @@ public class Program
 
         builder.Services.AddScoped<IShardManager, ShardManager>();
         builder.Services.AddSingleton<IRabbitmqService, RabbitMQService>();
+        builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+
+        builder.Services.AddAuthentication( CookieAuthenticationDefaults.AuthenticationScheme )
+            .AddCookie( options => options.LoginPath = "/Auth" );
+        builder.Services.AddAuthorization();
+
 
         var app = builder.Build();
 
@@ -41,6 +49,7 @@ public class Program
 
         app.UseRouting();
 
+        app.UseAuthentication();
         app.UseAuthorization();
 
         app.MapRazorPages();
