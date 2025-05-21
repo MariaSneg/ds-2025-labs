@@ -1,10 +1,8 @@
-using RankCalculator;
-using Xunit;
-using RankCalculator;
+﻿using RankCalculator;
 
-namespace Rankests;
+namespace RankTests;
 
-public class RankUtilsTests
+public class RankCalculatorUnitTests
 {
     private readonly RankCalculatorService _calculator = new();
     public static TheoryData<string, double> RankTestData => new TheoryData<string, double>
@@ -16,7 +14,7 @@ public class RankUtilsTests
         { "  a b  ", 5.0 / 7 },          // 4 spaces, 3 letters
         { "!@#ABC", 3.0 / 6 },           // 3 symbols, 3 letters
         { "     ", 1.0 },                // Only spaces
-        { "TextWith1Number", 1.0 / 15 }, // One digit
+        { "😊", 1.0 },                   // Emoji
         { "New\nLine", 1.0 / 8 }         // Newline is non-letter
     };
     
