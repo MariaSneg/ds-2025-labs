@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using StackExchange.Redis;
+﻿using Microsoft.AspNetCore.Mvc.RazorPages;
 using Valuator.Repositories;
 
 namespace Valuator.Pages;
@@ -17,9 +15,9 @@ public class SummaryModel : PageModel
 
     public double Rank { get; set; }
     public double Similarity { get; set; }
-    private bool Loading { get; set; }
+    public bool Loading { get; set; }
 
-    public void OnGet(string id)
+    public void OnGet( string id )
     {
         _logger.LogDebug( id );
         var rank = _repository.GetRankById( id );

@@ -16,27 +16,39 @@ public class SummaryPage
 
     public bool TryGetRankAndSimilarity( out double rank, out int similarity )
     {
-        ///try
-        //{
-            _wait.Until(driver => driver.FindElement( By.Id( "rank"  ) ).Text);
+        const int maxAttempts = 5;
+        rank = 0;
+        similarity = 0;
 
+        for ( int attempt = 0; attempt < maxAttempts; attempt++ )
+        {
+            _wait.Until( driver => driver.FindElement( By.Id( "rank" ) ) );
             var rankText = _driver.FindElement( By.Id( "rank" ) ).Text;
 
-            _wait.Until( driver => driver.FindElement( By.Id( "similarity" ) ).Text );
+            if ( rankText.Contains( "не завершена" ) )
+            {
+                Thread.Sleep( 1000 ); // Немного подождать перед перезагрузкой
+                Refresh();
+                continue;
+            }
+
             var similarityText = _driver.FindElement( By.Id( "similarity" ) ).Text;
 
-            rank = double.Parse( rankText.Split( ":" )[ 1 ].Trim(), CultureInfo.InvariantCulture );
-            similarity = int.Parse( similarityText.Split( ":" )[ 1 ].Trim() );
+            try
+            {
+                rank = double.Parse( rankText.Split( ":" )[ 1 ].Trim(), CultureInfo.InvariantCulture );
+                similarity = int.Parse( similarityText.Split( ":" )[ 1 ].Trim() );
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
-            return true;
-        //}
-        //catch
-        //{
-        //    rank = 0;
-        //    similarity = 0;
-        //    return false;
-        //}
+        return false;
     }
+
 
     public void Refresh()
     {

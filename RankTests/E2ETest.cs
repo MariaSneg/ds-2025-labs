@@ -27,7 +27,7 @@ public class E2ETest : IDisposable
         Thread.Sleep( 2000 ); 
         Assert.Contains( "/summary?id=", summaryPage.Url );
 
-        Thread.Sleep( 2000 );
+        //Thread.Sleep( 2000 );
         bool success = summaryPage.TryGetRankAndSimilarity( out double rank, out int similarity );
 
         Assert.True( success, "Результаты Rank и Similarity не получены." );
