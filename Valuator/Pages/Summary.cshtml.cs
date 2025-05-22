@@ -17,6 +17,7 @@ public class SummaryModel : PageModel
 
     public double Rank { get; set; }
     public double Similarity { get; set; }
+    public string Error { get; set; } = "";
     public bool Loading { get; set; } = false;
 
     public IActionResult OnGet( string id )
@@ -27,7 +28,8 @@ public class SummaryModel : PageModel
         var userClaim = User.FindFirst( ClaimTypes.Name );
         if ( userClaim == null )
         {
-            return Redirect( "/Authorization" );
+            Error = "Вы не авторизованы";
+            return Page();
         }
 
         string username = userClaim.Value;
@@ -36,7 +38,8 @@ public class SummaryModel : PageModel
 
         if ( username != author )
         {
-            return Redirect( "/Authorization" );
+            Error = "Вы не имеете прав доступа";
+            return Page();
         }
 
         var rankValue = _shardManager.Get( id, "RANK-" );

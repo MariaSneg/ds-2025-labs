@@ -1,5 +1,20 @@
 ﻿version: '3.8'
 
+x-redis-config: &redis-config
+      image: redis:latest
+      environment:
+        - REDIS_PASSWORD=${REDIS_PASSWORD}
+        - REDIS_USER=${REDIS_USER}
+        - REDIS_USER_PASSWORD=${REDIS_USER_PASSWORD}
+      command: /bin/sh -c "redis-server --requirepass $$REDIS_PASSWORD"
+      networks:
+        - app-network
+      healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
 services:
   # ASP.NET Core приложение
   app1:
@@ -113,30 +128,16 @@ services:
   redis_main:
     image: redis:latest
     container_name: redis_main
-    command: redis-server --requirepass admin123
+    <<: *redis-config
     ports:
       - "6000:6379"
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   redis_ru:
     image: redis:latest
     container_name: redis_ru
-    command: redis-server --requirepass admin123
+    <<: *redis-config
     ports:
       - "6001:6379"
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     depends_on:
       redis_main:
         condition: service_started
@@ -144,16 +145,9 @@ services:
   redis_eu:
     image: redis:latest
     container_name: redis_eu
-    command: redis-server --requirepass admin123
+    <<: *redis-config
     ports:
       - "6002:6379"
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     depends_on:
       redis_main:
         condition: service_started
@@ -161,16 +155,9 @@ services:
   redis_asia:
     image: redis:latest
     container_name: redis_asia
-    command: redis-server --requirepass admin123
+    <<: *redis-config
     ports:
       - "6003:6379"
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     depends_on:
       redis_main:
         condition: service_started
@@ -180,9 +167,8 @@ services:
     container_name: rabbitmq
     hostname: rabbitmq
     environment:
-      - RABBITMQ_DEFAULT_USER=admin
-      - RABBITMQ_DEFAULT_PASS=123
-      - RABBITMQ_ERLANG_COOKIE=supersecretlongcookie1234567890
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
     ports:
       - "5672:5672"  # AMQP
       - "15672:15672"  # Web UI
