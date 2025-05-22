@@ -7,7 +7,7 @@ using Valuator.DTOs;
 using Valuator.Utils;
 
 namespace Valuator.Pages;
-//пароль неверный
+
 public class AuthorizationModel : PageModel
 {
     [BindProperty]
@@ -44,9 +44,7 @@ public class AuthorizationModel : PageModel
         }
 
         var claims = new List<Claim> { new( ClaimTypes.Name, user.Username ) };
-        // создаем объект ClaimsIdentity
         ClaimsIdentity claimsIdentity = new ClaimsIdentity( claims, "Cookies" );
-        // установка аутентификационных куки
         await HttpContext.SignInAsync( CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal( claimsIdentity ) );
 
         return Redirect( "/" );
