@@ -34,13 +34,13 @@ public class ValuatorRepository : IValuatorRepository
     public int GetSimilarityById( string id )
     {
         string similarityKey = "SIMILARITY-" + id;
-        return ( int )_database.StringGet( similarityKey );
+        return (int)_database.StringGet( similarityKey );
     }
 
-    public double GetRankById( string id )
+    public RedisValue GetRankById( string id )
     {
         string rankKey = "RANK-" + id;
-        return ( double )_database.StringGet( rankKey );
+        return _database.StringGet( rankKey );
     }
 
     public int CheckSimilarity( string text )

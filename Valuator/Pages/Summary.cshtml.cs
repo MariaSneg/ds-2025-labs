@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using StackExchange.Redis;
 using Valuator.Repositories;
 
 namespace Valuator.Pages;
@@ -17,18 +19,28 @@ public class SummaryModel : PageModel
     public double Similarity { get; set; }
     public bool Loading { get; set; }
 
-    public void OnGet( string id )
+    public IActionResult OnGet( string id )
     {
         _logger.LogDebug( id );
-        var rank = _repository.GetRankById( id );
+        RedisValue rank = _repository.GetRankById( id );
         var similarity = ( int )_repository.GetSimilarityById( id );
-        Similarity = similarity;
-        if ( rank != StackExchange.Redis.RedisValue.Null )
+        if ( similarity == RedisValue.Null )
+        {
+            Similarity = 0;
+        }
+        else
+        {
+            Similarity = ( int )similarity;
+        }
+
+        if ( rank != RedisValue.Null )
         {
             Rank = Convert.ToDouble( rank );
-            Console.WriteLine( Rank );
-            return;
+            return Page();
         }
+
+        Rank = -1;
         Loading = true;
+        return Page();
     }
 }
