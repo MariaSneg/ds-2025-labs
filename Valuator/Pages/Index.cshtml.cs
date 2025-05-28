@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Valuator.Services;
@@ -33,7 +32,7 @@ public class IndexModel : PageModel
     {
         Port = Environment.GetEnvironmentVariable( "EXTERNAL_PORT" ) ?? "NO PORT";
     }
-    //ошибка при отправке
+    
     public IActionResult OnPost(string text, string country, CancellationTokenSource cts )
     {
         _logger.LogDebug( text );

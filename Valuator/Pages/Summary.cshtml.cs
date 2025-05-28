@@ -25,22 +25,7 @@ public class SummaryModel : PageModel
         _logger.LogDebug( id );
         _shardManager.SetRegionShard( id );
 
-        var userClaim = User.FindFirst( ClaimTypes.Name );
-        if ( userClaim == null )
-        {
-            Error = "Вы не авторизованы";
-            return Page();
-        }
-
-        string username = userClaim.Value;
-
-        string author = _shardManager.GetAuthor( id ).ToString();
-
-        if ( username != author )
-        {
-            Error = "Вы не имеете прав доступа";
-            return Page();
-        }
+        
 
         var rankValue = _shardManager.Get( id, "RANK-" );
         var similarityValue = _shardManager.Get( id, "SIMILARITY-" );

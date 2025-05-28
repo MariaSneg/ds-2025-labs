@@ -148,6 +148,7 @@ public class ShardManager : IShardManager
 
         var db = _mainDatabase;
 
+        var transaction = db.CreateTransaction();
 
         // Основной ключ с данными пользователя
         await db.HashSetAsync( $"USER-{user.Id}", entries );
@@ -155,6 +156,12 @@ public class ShardManager : IShardManager
         // Индекс для поиска по username
         await db.StringSetAsync( $"USER-USERNAME-{user.Username}", user.Id );
 
+        var committed = transaction.Execute();
+
+        if(!committed )
+        {
+            new Exception( "transaction is not committed" );
+        }
 
         _logger.LogInformation( "ADD USER 2 {id}, {username}, {pwd}", user.Id, user.Username, user.Password );
     }
