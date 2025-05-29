@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Valuator.DTOs;
+using Valuator.Repositories;
 using Valuator.Utils;
 
 namespace Valuator.Pages;
@@ -10,12 +11,12 @@ public class RegistrationModel : PageModel
 {
     [BindProperty]
     public CreateUserDto Input { get; set; }
-    private IShardManager _shardManager;
+    private readonly IUserRepository _userRepository;
     private IPasswordHasher _passwordHasher;
 
-    public RegistrationModel( IShardManager shardManager, IPasswordHasher passwordHasher )
+    public RegistrationModel( IUserRepository userRepository, IPasswordHasher passwordHasher )
     {
-        _shardManager = shardManager;
+        _userRepository = userRepository;
         _passwordHasher = passwordHasher;
     }
 
@@ -29,14 +30,14 @@ public class RegistrationModel : PageModel
         {
             return Page();
         }
-        var userExists = await _shardManager.UserExists( Input.Username );
+        var userExists = await _userRepository.UserExists( Input.Username );
         if ( userExists )
         {
             ModelState.AddModelError( string.Empty, "Username or email already exists." );
             return Page();
         }
 
-        await _shardManager.AddUser( new Models.User
+        await _userRepository.AddUser( new Models.User
         {
             Username = Input.Username,
             Password = _passwordHasher.Hash( Input.Password )

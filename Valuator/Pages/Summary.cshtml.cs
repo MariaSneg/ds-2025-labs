@@ -1,19 +1,20 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using StackExchange.Redis;
+using Valuator.Services;
 
 namespace Valuator.Pages;
 public class SummaryModel : PageModel
 {
     private readonly ILogger<SummaryModel> _logger;
-    private readonly IShardManager _shardManager;
+    private readonly ITextService _textService;
 
-    public SummaryModel( ILogger<SummaryModel> logger, IShardManager shardManager )
+    public SummaryModel( ILogger<SummaryModel> logger, ITextService textService )
     {
         _logger = logger;
-        _shardManager = shardManager;
+        _textService = textService;
     }
+
 
     public double Rank { get; set; }
     public double Similarity { get; set; }
@@ -23,12 +24,11 @@ public class SummaryModel : PageModel
     public IActionResult OnGet( string id )
     {
         _logger.LogDebug( id );
-        _shardManager.SetRegionShard( id );
+        _textService.SetRegion( id );
 
-        
 
-        var rankValue = _shardManager.Get( id, "RANK-" );
-        var similarityValue = _shardManager.Get( id, "SIMILARITY-" );
+        var rankValue = _textService.Get( id, "RANK-" );
+        var similarityValue = _textService.Get( id, "SIMILARITY-" );
 
         if ( similarityValue == RedisValue.Null )
         {

@@ -8,7 +8,7 @@ namespace Valuator.Pages;
 public class IndexModel : PageModel
 {
     private readonly ILogger<IndexModel> _logger;
-    private readonly IShardManager _shardManager;
+    private readonly ITextService _textService;
     private readonly IRabbitmqService _service;
     private readonly Dictionary<string, string> _countryRegions = new()
     {
@@ -21,10 +21,10 @@ public class IndexModel : PageModel
 
     public string Port { get; private set; }
 
-    public IndexModel( ILogger<IndexModel> logger, IShardManager shardManager, IRabbitmqService rabbitmqService )
+    public IndexModel( ILogger<IndexModel> logger, ITextService textService, IRabbitmqService rabbitmqService )
     {
         _logger = logger;
-        _shardManager = shardManager;
+        _textService = textService;
         _service = rabbitmqService;
     }
 
@@ -33,7 +33,7 @@ public class IndexModel : PageModel
         Port = Environment.GetEnvironmentVariable( "EXTERNAL_PORT" ) ?? "NO PORT";
     }
     
-    public IActionResult OnPost(string text, string country, CancellationTokenSource cts )
+    public async Task<IActionResult> OnPost(string text, string country, CancellationTokenSource cts )
     {
         _logger.LogDebug( text );
 
@@ -43,14 +43,14 @@ public class IndexModel : PageModel
         }
         
         string id = Guid.NewGuid().ToString();
-        _shardManager.SetToMain( id, _countryRegions[ country ] );
+        _textService.SetToMain( id, _countryRegions[ country ] );
 
-		_shardManager.SetRegionShard( id );
+        _textService.SetRegion( id );
 
-		int similarity = _shardManager.CheckSimilarity( text );
-        _shardManager.SetSimilarity( id, similarity );
+		int similarity =await _textService.CheckSimilarity( text );
+        _textService.SetSimilarity( id, similarity );
 
-        _shardManager.SetText( id, text );
+        _textService.SetText( id, text );
 
         var userClaim = User.FindFirst( ClaimTypes.Name );
         if ( userClaim == null )
@@ -60,7 +60,7 @@ public class IndexModel : PageModel
 
         string username = userClaim.Value;
 
-        _shardManager.SetAuthor( id, username );
+        _textService.SetAuthor( id, username );
 
 
         _service.SendRankMessage( id, cts );

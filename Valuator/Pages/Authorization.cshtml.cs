@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Valuator.DTOs;
+using Valuator.Repositories;
 using Valuator.Utils;
 
 namespace Valuator.Pages;
@@ -12,13 +13,13 @@ public class AuthorizationModel : PageModel
 {
     [BindProperty]
     public LoginDto Input { get; set; }
-    private IShardManager _shardManager;
+    private readonly IUserRepository _userRepository;
     private IPasswordHasher _passwordHasher;
     private ILogger<AuthorizationModel> _logger;
 
-    public AuthorizationModel( ILogger<AuthorizationModel> logger,IShardManager shardManager, IPasswordHasher passwordHasher )
+    public AuthorizationModel( ILogger<AuthorizationModel> logger, IUserRepository userRepository, IPasswordHasher passwordHasher )
     {
-        _shardManager = shardManager;
+        _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _logger = logger;
     }
@@ -33,7 +34,7 @@ public class AuthorizationModel : PageModel
             return Page();
         }
 
-        var user = await _shardManager.GetUser( Input.Username );
+        var user = await _userRepository.GetUser( Input.Username );
 
         if ( user is null )
             return Page();

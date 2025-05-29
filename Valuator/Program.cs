@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis;
+using Valuator.Repositories;
 using Valuator.Services;
 using Valuator.Utils;
 
@@ -29,7 +30,9 @@ public class Program
 
         builder.Services.AddMvc( options => options.Filters.Add( new AutoValidateAntiforgeryTokenAttribute() ) );
 
-        builder.Services.AddScoped<IShardManager, ShardManager>();
+        builder.Services.AddSingleton<IShardRouter, ShardRouter>();
+        builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<ITextService, TextService>();
         builder.Services.AddSingleton<IRabbitmqService, RabbitMQService>();
         builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 

@@ -1,19 +1,18 @@
 ﻿version: '3.8'
 
 x-redis-config: &redis-config
-      image: redis:latest
-      environment:
-        - REDIS_PASSWORD=${REDIS_PASSWORD}
-        - REDIS_USER=${REDIS_USER}
-        - REDIS_USER_PASSWORD=${REDIS_USER_PASSWORD}
-      command: /bin/sh -c "redis-server --requirepass $$REDIS_PASSWORD"
-      networks:
-        - app-network
-      healthcheck:
-        test: ["CMD", "redis-cli", "ping"]
-        interval: 10s
-        timeout: 5s
-        retries: 5
+  image: redis:latest
+  volumes:
+    - ./redis/generated/redis.conf:/usr/local/etc/redis/redis.conf
+  command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+  networks:
+    - app-network
+  healthcheck:
+    test: ["CMD", "redis-cli", "ping"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+
 
 services:
   # ASP.NET Core приложение
