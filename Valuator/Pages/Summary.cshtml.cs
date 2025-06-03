@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using StackExchange.Redis;
 using Valuator.Services;
@@ -26,6 +27,22 @@ public class SummaryModel : PageModel
         _logger.LogDebug( id );
         _textService.SetRegion( id );
 
+        var userClaim = User.FindFirst( ClaimTypes.Name );
+        if ( userClaim == null )
+        {
+            Error = "Вы не авторизованы";
+            return Page();
+        }
+
+        string username = userClaim.Value;
+
+        string author = _textService.GetAuthor( id ).ToString();
+
+        if ( username != author )
+        {
+            Error = "Вы не имеете прав доступа";
+            return Page();
+        }
 
         var rankValue = _textService.Get( id, "RANK-" );
         var similarityValue = _textService.Get( id, "SIMILARITY-" );

@@ -16,20 +16,21 @@ public class UserRepository : IUserRepository
 
     public async Task AddUser( User user )
     {
-        var tx = _db.CreateTransaction();
+        _logger.LogInformation( "ADD USER" );
+        //var tx = _db.CreateTransaction();
 
-        await tx.HashSetAsync( $"USER-{user.Id}", new HashEntry[]
+        await _db.HashSetAsync( $"USER-{user.Id}", new HashEntry[]
         {
             new("id", user.Id),
             new("username", user.Username),
             new("password", user.Password),
         } );
 
-        await tx.StringSetAsync( $"USER-USERNAME-{user.Username}", user.Id );
+        await _db.StringSetAsync( $"USER-USERNAME-{user.Username}", user.Id );
 
-        var committed = await tx.ExecuteAsync();
-        if ( !committed )
-            throw new Exception( "Transaction failed during AddUser" );
+        //var committed = await tx.ExecuteAsync();
+        //if ( !committed )
+        //    throw new Exception( "Transaction failed during AddUser" );
 
         _logger.LogInformation( "User {Username} added", user.Username );
     }
