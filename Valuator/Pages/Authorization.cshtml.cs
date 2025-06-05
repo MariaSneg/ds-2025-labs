@@ -36,13 +36,12 @@ public class AuthorizationModel : PageModel
 
         var user = await _userRepository.GetUser( Input.Username );
 
-        if ( user is null )
-            return Page();
-
-        if ( !_passwordHasher.Verify( Input.Password, user.Password ) )
+        if ( user is null || !_passwordHasher.Verify( Input.Password, user.Password ) )
         {
+            ModelState.AddModelError( string.Empty, "Username or password is incorrect" );
             return Page();
         }
+
 
         var claims = new List<Claim> { new( ClaimTypes.Name, user.Username ) };
         ClaimsIdentity claimsIdentity = new ClaimsIdentity( claims, "Cookies" );

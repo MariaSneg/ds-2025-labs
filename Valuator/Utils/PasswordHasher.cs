@@ -1,31 +1,35 @@
 ﻿using System.Security.Cryptography;
-using System.Text;
 
 namespace Valuator.Utils;
 
 public class PasswordHasher : IPasswordHasher
 {
+    private const int SaltSize = 16;
+    private const int HashSize = 32;
+    private const int Iterations = 100000;
+
     public string Hash( string password )
     {
-        using ( SHA256 sha256Hash = SHA256.Create() )
-        {
-            // Получаем байты из входной строки
-            byte[] bytes = sha256Hash.ComputeHash( Encoding.UTF8.GetBytes( password ) );
+        byte[] salt = RandomNumberGenerator.GetBytes( SaltSize );
 
-            // Преобразуем байты в шестнадцатеричную строку
-            StringBuilder builder = new StringBuilder();
-            foreach ( byte b in bytes )
-            {
-                builder.Append( b.ToString( "x2" ) ); // "x2" означает два символа в нижнем регистре
-            }
+        using var pbkdf2 = new Rfc2898DeriveBytes( password, salt, Iterations, HashAlgorithmName.SHA256 );
+        byte[] hash = pbkdf2.GetBytes( HashSize );
 
-            return builder.ToString();
-        }
+        return $"{Convert.ToBase64String( salt )}:{Convert.ToBase64String( hash )}";
     }
 
     public bool Verify( string password, string hashedPassword )
     {
-        return hashedPassword == Hash(password);
+        var parts = hashedPassword.Split( ':' );
+        if ( parts.Length != 2 )
+            return false;
+
+        byte[] salt = Convert.FromBase64String( parts[ 0 ] );
+        byte[] expectedHash = Convert.FromBase64String( parts[ 1 ] );
+
+        using var pbkdf2 = new Rfc2898DeriveBytes( password, salt, Iterations, HashAlgorithmName.SHA256 );
+        byte[] actualHash = pbkdf2.GetBytes( HashSize );
+
+        return CryptographicOperations.FixedTimeEquals( expectedHash, actualHash );
     }
 }
-

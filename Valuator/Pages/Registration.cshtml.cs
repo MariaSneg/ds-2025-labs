@@ -33,7 +33,7 @@ public class RegistrationModel : PageModel
         var userExists = await _userRepository.UserExists( Input.Username );
         if ( userExists )
         {
-            ModelState.AddModelError( string.Empty, "Username or email already exists." );
+            ModelState.AddModelError( string.Empty, "Username already exists" );
             return Page();
         }
 

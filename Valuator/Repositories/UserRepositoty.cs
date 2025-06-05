@@ -17,7 +17,6 @@ public class UserRepository : IUserRepository
     public async Task AddUser( User user )
     {
         _logger.LogInformation( "ADD USER" );
-        //var tx = _db.CreateTransaction();
 
         await _db.HashSetAsync( $"USER-{user.Id}", new HashEntry[]
         {
@@ -27,10 +26,6 @@ public class UserRepository : IUserRepository
         } );
 
         await _db.StringSetAsync( $"USER-USERNAME-{user.Username}", user.Id );
-
-        //var committed = await tx.ExecuteAsync();
-        //if ( !committed )
-        //    throw new Exception( "Transaction failed during AddUser" );
 
         _logger.LogInformation( "User {Username} added", user.Username );
     }
